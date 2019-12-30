@@ -2,10 +2,32 @@
 import React, { useState, useEffect, useContext } from "react";
 import createAuth0Client from "@auth0/auth0-spa-js";
 
-const DEFAULT_REDIRECT_CALLBACK = () => window.history.replaceState({}, document.title, window.location.pathname);
+// ---------------------------------------------------------------------------------
 
+// Internal function
+// Modifies the current history entry
+// Essentially changes URL of current page without having to reload the page
+// We seem to be replacing URL with the SAME current URL
+// It also seems that we never actually call this function
+const DEFAULT_REDIRECT_CALLBACK = () => {
+    console.error("Changing Page URL:", window.location.pathname);
+    // replaceState() does not manipulate browser history, it simply replaces current URL in address bar
+    // window.history.replaceState({}, document.title, window.location.pathname);
+};
+
+// ---------------------------------------------------------------------------------
+
+// Exported function
 export const Auth0Context = React.createContext();
+
+// ---------------------------------------------------------------------------------
+
+// Exported function
 export const useAuth0 = () => useContext(Auth0Context);
+
+// ---------------------------------------------------------------------------------
+
+// Exported function to create Auth0Client
 export const Auth0Provider = ({ children, onRedirectCallback = DEFAULT_REDIRECT_CALLBACK, ...initOptions }) => {
     const [isAuthenticated, setIsAuthenticated] = useState();
     const [user, setUser] = useState();
@@ -15,6 +37,7 @@ export const Auth0Provider = ({ children, onRedirectCallback = DEFAULT_REDIRECT_
 
     useEffect(() => {
         const initAuth0 = async () => {
+            console.warn("Creating Auth0 Client");
             const auth0FromHook = await createAuth0Client(initOptions);
             setAuth0(auth0FromHook);
 
@@ -79,3 +102,5 @@ export const Auth0Provider = ({ children, onRedirectCallback = DEFAULT_REDIRECT_
         </Auth0Context.Provider>
     );
 };
+
+// ---------------------------------------------------------------------------------

@@ -9,8 +9,12 @@ import { Link } from "react-router-dom";
 const NavBar = () => {
     const { isAuthenticated, loginWithRedirect, logout } = useAuth0();
 
+    const isAuthenticatedStatus = isAuthenticated ? "true" : "false";
+
     return (
         <div>
+            <div>I am a Div</div>
+            <div>isAuthenticated: {isAuthenticatedStatus}</div>
             {!isAuthenticated && <button onClick={() => loginWithRedirect({})}>Log in</button>}
 
             {isAuthenticated && <button onClick={() => logout()}>Log out</button>}
