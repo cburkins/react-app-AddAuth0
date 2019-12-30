@@ -7,6 +7,10 @@ import { useAuth0 } from "../react-auth0-spa";
 const PrivateRoute = ({ component: Component, path, ...rest }) => {
     const { loading, isAuthenticated, loginWithRedirect } = useAuth0();
 
+    // React Hook
+    // useEffect runs after first render, and after every re-render (DOM update)
+    // sort of like componentDidMount, componentDidUpdate, and componentWillUnmount combined
+    // Only re-run if one of the following changes: isAuthenticated, loginWithRedirect, path
     useEffect(() => {
         if (loading || isAuthenticated) {
             return;

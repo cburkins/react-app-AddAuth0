@@ -14,12 +14,13 @@ import history from "./utils/history";
 import PrivateRoute from "./components/PrivateRoute";
 
 function App() {
+    // loading=true means that we are still waiting to get our authentication state from Auth0
     const { loading } = useAuth0();
-
     if (loading) {
         return <div>Loading...</div>;
     }
 
+    // OK, we've not get our authentication state (either authenticated or NOT Authenticated)
     return (
         <div className="App">
             {/* Don't forget to include the history module */}
