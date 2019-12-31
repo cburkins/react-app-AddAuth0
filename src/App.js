@@ -3,11 +3,13 @@
 import React from "react";
 import NavBar from "./components/NavBar";
 import { useAuth0 } from "./react-auth0-spa";
+import { Container } from "reactstrap";
 
 // New - import the React Router components, and the Profile page component
 import { Router, Route, Switch } from "react-router-dom";
 import Profile from "./components/Profile";
 import RootPath from "./components/RootPath";
+import PageOne from "./components/PageOne";
 import history from "./utils/history";
 
 // NEW - import the PrivateRoute component
@@ -25,13 +27,16 @@ function App() {
         <div className="App">
             {/* Don't forget to include the history module */}
             <Router history={history}>
-                <header>
+                <div id="app" className="d-flex flex-column h-100">
                     <NavBar />
-                </header>
-                <Switch>
-                    <Route path="/" exact component={RootPath} />
-                    <PrivateRoute path="/profile" component={Profile} />
-                </Switch>
+                    <Container className="flex-grow-1 mt-5">
+                        <Switch>
+                            <Route path="/" exact component={RootPath} />
+                            <Route path="/page01" exact component={PageOne} />
+                            <PrivateRoute path="/profile" component={Profile} />
+                        </Switch>
+                    </Container>
+                </div>
             </Router>
         </div>
     );

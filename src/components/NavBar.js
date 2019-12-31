@@ -3,29 +3,61 @@
 import React from "react";
 import { useAuth0 } from "../react-auth0-spa";
 
-// NEW - import the Link component
-import { Link } from "react-router-dom";
+// So it doesn't conflict with NavLink from reactstrap ?
+import { NavLink as RouterNavLink } from "react-router-dom";
+
+import {
+    Collapse,
+    Container,
+    Navbar,
+    NavbarToggler,
+    NavbarBrand,
+    Nav,
+    NavItem,
+    NavLink,
+    Button,
+    UncontrolledDropdown,
+    DropdownToggle,
+    DropdownMenu,
+    DropdownItem
+} from "reactstrap";
 
 const NavBar = () => {
     const { isAuthenticated, loginWithRedirect, logout } = useAuth0();
 
-    const isAuthenticatedStatus = isAuthenticated ? "true" : "false";
+    const isAuthenticatedStatus = isAuthenticated ? "Authenticated" : "Not Authenticated";
 
     return (
-        <div>
-            <div>I am a Div</div>
-            <div>isAuthenticated: {isAuthenticatedStatus}</div>
-            {!isAuthenticated && <button onClick={() => loginWithRedirect({})}>Log in</button>}
+        <div className="nav-container">
+            <Navbar color="light" light expand="md">
+                {/* Adding "navbar" changes css class from "nav" to "navbar-nav" */}
+                {/* "navbar-nav" boostrap class gives full-height and lightweight navigation */}
+                {/* className of "mr-auto" seems to push the next element all the way to the right as I desire */}
+                <Nav navbar className="mr-auto">
+                    <NavItem>
+                        <NavLink tag={RouterNavLink} to="/" exact activeClassName="router-link-exact-active">
+                            Home
+                        </NavLink>
+                    </NavItem>
+                    <NavItem>
+                        <NavLink tag={RouterNavLink} to="/page01" activeClassName="router-link-exact-active">
+                            Page01
+                        </NavLink>
+                    </NavItem>
+                    <NavItem>
+                        <NavLink tag={RouterNavLink} to="/profile" exact activeClassName="router-link-exact-active">
+                            Profile (Protected)
+                        </NavLink>
+                    </NavItem>
+                </Nav>
 
-            {isAuthenticated && <button onClick={() => logout()}>Log out</button>}
-
-            {/* NEW - add a link to the home and profile pages */}
-            {isAuthenticated && (
-                <span>
-                    <Link to="/">Home</Link>&nbsp;
-                    <Link to="/profile">Profile</Link>
-                </span>
-            )}
+                {/* This gets pushed to right margin by "mr-auto" above */}
+                <Nav>Status: {isAuthenticatedStatus}</Nav>
+                <Nav className="ml-3">
+                    {!isAuthenticated && <button onClick={() => loginWithRedirect({})}>Log in</button>}
+                    {isAuthenticated && <button onClick={() => logout()}>Log out</button>}
+                </Nav>
+            </Navbar>
         </div>
     );
 };
