@@ -1,6 +1,6 @@
 ## Background
 
-This is my first attempt to use the Auth0 framework for user authentication. I have a 2nd attempt that's a bit cleaner, and uses react-bootstrap (more popular) rather than reactstrap.
+This is my first attempt to use the Auth0 framework for user authentication. <b>I have a 2nd attempt (https://github.com/cburkins/poc-react-react-bootstrap) that's a bit cleaner,</b> and uses react-bootstrap (more popular) rather than reactstrap.
 
 This app started as a plain vanilla React app created with "npx create-react-app", I then used the tutorial from Auth0 to layer on login security.
 
