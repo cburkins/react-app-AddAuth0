@@ -1,17 +1,31 @@
-This app started as a plain vanilla React app created with "npx create-react-app"
-I then used the tutorial from Auth0 to layer on login security.
+## Background
+
+This is my first attempt to use the Auth0 framework for user authentication. I have a 2nd attempt that's a bit cleaner, and uses react-bootstrap (more popular) rather than reactstrap.
+
+This app started as a plain vanilla React app created with "npx create-react-app", I then used the tutorial from Auth0 to layer on login security.
 
 (used to be in my Google Docs, now I've transcribed the whole thing into this doc))
 
-#### In the Beginning
+NOTE: This app contains zero sensitive information. The Auth0 application config is stored in auth_config.json; however, this is not considered sensitive info. It just tells this app which Auth0 config to authenticate against (as I have several Auth0 configs)
 
-- npx create-react-app my-app
-- cd my-app
-- npm install react-router-dom @auth0/auth0-spa-js
-- npm start (just to test it)
-- cd src
-- mkdir utils
-- Create history.js (got rid of this later by switching from <Router> to <HashRouter>)
+## Building This App
+
+Summary: Started from CRA (create-react-app), and layered on Auth0 via their React Tutorial
+
+#### Startup
+
+```
+npx create-react-app my-app
+cd my-app
+npm install react-router-dom @auth0/auth0-spa-js
+npm start (just to test it)
+
+```
+
+#### Adding history
+
+-   mkdir src/utils
+-   Create src/util history.js (got rid of this later by switching from <Router> to <HashRouter>)
 
 ```jsx
 // src/utils/history.js
@@ -20,9 +34,9 @@ import { createBrowserHistory } from "history";
 export default createBrowserHistory();
 ```
 
-### Create custom hooks
+#### Create custom hooks
 
-- Create src/react-auth-spa.js (slimmed down later)
+-   Create src/react-auth-spa.js (slimmed down later)
 
 NOTE: This is a set of custom React hooks that enable you to work with the Auth0 SDK in a more idiomatic way, providing functions that allow the user to log in, log out, and information such as whether the user is logged in
 
@@ -36,84 +50,84 @@ const DEFAULT_REDIRECT_CALLBACK = () => window.history.replaceState({}, document
 export const Auth0Context = React.createContext();
 export const useAuth0 = () => useContext(Auth0Context);
 export const Auth0Provider = ({ children, onRedirectCallback = DEFAULT_REDIRECT_CALLBACK, ...initOptions }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState();
-  const [user, setUser] = useState();
-  const [auth0Client, setAuth0] = useState();
-  const [loading, setLoading] = useState(true);
-  const [popupOpen, setPopupOpen] = useState(false);
+    const [isAuthenticated, setIsAuthenticated] = useState();
+    const [user, setUser] = useState();
+    const [auth0Client, setAuth0] = useState();
+    const [loading, setLoading] = useState(true);
+    const [popupOpen, setPopupOpen] = useState(false);
 
-  useEffect(() => {
-    const initAuth0 = async () => {
-      const auth0FromHook = await createAuth0Client(initOptions);
-      setAuth0(auth0FromHook);
+    useEffect(() => {
+        const initAuth0 = async () => {
+            const auth0FromHook = await createAuth0Client(initOptions);
+            setAuth0(auth0FromHook);
 
-      if (window.location.search.includes("code=")) {
-        const { appState } = await auth0FromHook.handleRedirectCallback();
-        onRedirectCallback(appState);
-      }
+            if (window.location.search.includes("code=")) {
+                const { appState } = await auth0FromHook.handleRedirectCallback();
+                onRedirectCallback(appState);
+            }
 
-      const isAuthenticated = await auth0FromHook.isAuthenticated();
+            const isAuthenticated = await auth0FromHook.isAuthenticated();
 
-      setIsAuthenticated(isAuthenticated);
+            setIsAuthenticated(isAuthenticated);
 
-      if (isAuthenticated) {
-        const user = await auth0FromHook.getUser();
+            if (isAuthenticated) {
+                const user = await auth0FromHook.getUser();
+                setUser(user);
+            }
+
+            setLoading(false);
+        };
+        initAuth0();
+        // eslint-disable-next-line
+    }, []);
+
+    const loginWithPopup = async (params = {}) => {
+        setPopupOpen(true);
+        try {
+            await auth0Client.loginWithPopup(params);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setPopupOpen(false);
+        }
+        const user = await auth0Client.getUser();
         setUser(user);
-      }
-
-      setLoading(false);
+        setIsAuthenticated(true);
     };
-    initAuth0();
-    // eslint-disable-next-line
-  }, []);
 
-  const loginWithPopup = async (params = {}) => {
-    setPopupOpen(true);
-    try {
-      await auth0Client.loginWithPopup(params);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setPopupOpen(false);
-    }
-    const user = await auth0Client.getUser();
-    setUser(user);
-    setIsAuthenticated(true);
-  };
-
-  const handleRedirectCallback = async () => {
-    setLoading(true);
-    await auth0Client.handleRedirectCallback();
-    const user = await auth0Client.getUser();
-    setLoading(false);
-    setIsAuthenticated(true);
-    setUser(user);
-  };
-  return (
-    <Auth0Context.Provider
-      value={{
-        isAuthenticated,
-        user,
-        loading,
-        popupOpen,
-        loginWithPopup,
-        handleRedirectCallback,
-        getIdTokenClaims: (...p) => auth0Client.getIdTokenClaims(...p),
-        loginWithRedirect: (...p) => auth0Client.loginWithRedirect(...p),
-        getTokenSilently: (...p) => auth0Client.getTokenSilently(...p),
-        getTokenWithPopup: (...p) => auth0Client.getTokenWithPopup(...p),
-        logout: (...p) => auth0Client.logout(...p)
-      }}>
-      {children}
-    </Auth0Context.Provider>
-  );
+    const handleRedirectCallback = async () => {
+        setLoading(true);
+        await auth0Client.handleRedirectCallback();
+        const user = await auth0Client.getUser();
+        setLoading(false);
+        setIsAuthenticated(true);
+        setUser(user);
+    };
+    return (
+        <Auth0Context.Provider
+            value={{
+                isAuthenticated,
+                user,
+                loading,
+                popupOpen,
+                loginWithPopup,
+                handleRedirectCallback,
+                getIdTokenClaims: (...p) => auth0Client.getIdTokenClaims(...p),
+                loginWithRedirect: (...p) => auth0Client.loginWithRedirect(...p),
+                getTokenSilently: (...p) => auth0Client.getTokenSilently(...p),
+                getTokenWithPopup: (...p) => auth0Client.getTokenWithPopup(...p),
+                logout: (...p) => auth0Client.logout(...p)
+            }}>
+            {children}
+        </Auth0Context.Provider>
+    );
 };
 ```
 
-## Create NavBar
+#### Create NavBar
 
-- Create directory src/components
-- Create src/components/NavBar.js
+-   Create directory src/components
+-   Create src/components/NavBar.js
 
 NOTE: This component will show the login and logout buttons
 
@@ -124,23 +138,25 @@ import React from "react";
 import { useAuth0 } from "../react-auth0-spa";
 
 const NavBar = () => {
-  const { isAuthenticated, loginWithRedirect, logout } = useAuth0();
+    const { isAuthenticated, loginWithRedirect, logout } = useAuth0();
 
-  return (
-    <div>
-      {!isAuthenticated && <button onClick={() => loginWithRedirect({})}>Log in</button>}
+    return (
+        <div>
+            {!isAuthenticated && <button onClick={() => loginWithRedirect({})}>Log in</button>}
 
-      {isAuthenticated && <button onClick={() => logout()}>Log out</button>}
-    </div>
-  );
+            {isAuthenticated && <button onClick={() => logout()}>Log out</button>}
+        </div>
+    );
 };
 
 export default NavBar;
 ```
 
-##### And Replace contents of src/index.js with:
+#### Wrap Entire App in Auth0
 
-NOTE: By wrapping the root <App /> in the <Auth0Provider> component, everything within App will be able to access and use the Auth0 functionality
+By wrapping the root <App /> in the <Auth0Provider> component, everything within App will be able to access and use the Auth0 functionality
+
+Replace contents of src/index.js with:
 
 ```jsx
 // src/index.js
@@ -156,20 +172,22 @@ import history from "./utils/history";
 // A function that routes the user to the right place
 // after login
 const onRedirectCallback = appState => {
-  history.push(appState && appState.targetUrl ? appState.targetUrl : window.location.pathname);
+    history.push(appState && appState.targetUrl ? appState.targetUrl : window.location.pathname);
 };
 
 ReactDOM.render(
-  <Auth0Provider domain={config.domain} client_id={config.clientId} redirect_uri={window.location.origin} onRedirectCallback={onRedirectCallback}>
-    <App />
-  </Auth0Provider>,
-  document.getElementById("root")
+    <Auth0Provider domain={config.domain} client_id={config.clientId} redirect_uri={window.location.origin} onRedirectCallback={onRedirectCallback}>
+        <App />
+    </Auth0Provider>,
+    document.getElementById("root")
 );
 
 serviceWorker.unregister();
 ```
 
-##### Create config file (src/auth_config.json)
+#### Create config file (src/auth_config.json)
+
+Simply tells this app which Auth0 config to use when authenticating a user
 
 ```jsx
 {
@@ -179,7 +197,7 @@ serviceWorker.unregister();
 
 ```
 
-##### Make NavBar functional (Replace contents of src/App.js)
+#### Make NavBar functional (Replace contents of src/App.js)
 
 NOTE: This gets rid of the OOB React logo, and gives you the working NavBar with login buttons
 
@@ -191,31 +209,35 @@ import NavBar from "./components/NavBar";
 import { useAuth0 } from "./react-auth0-spa";
 
 function App() {
-  const { loading } = useAuth0();
+    const { loading } = useAuth0();
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+    if (loading) {
+        return <div>Loading...</div>;
+    }
 
-  return (
-    <div className="App">
-      <header>
-        <NavBar />
-      </header>
-    </div>
-  );
+    return (
+        <div className="App">
+            <header>
+                <NavBar />
+            </header>
+        </div>
+    );
 }
 
 export default App;
 ```
 
-### Checkpoint (Login)
+#### Checkpoint (Login)
 
 Checkpoint: At this point, this will give you a VERY basic blank application with a basic NavBar, with a "Login" button. Go ahead and try it out !
 
 ![image](https://user-images.githubusercontent.com/9342308/71633255-2cf34d80-2be1-11ea-962c-907c86edc30b.png)
 
-### Create src/components/Profile.js
+## Creating a Password-Protected Route
+
+#### Creating the actual page to be protected
+
+Create src/components/Profile.js
 
 ```jsx
 // src/components/Profile.js
@@ -224,27 +246,29 @@ import React, { Fragment } from "react";
 import { useAuth0 } from "../react-auth0-spa";
 
 const Profile = () => {
-  const { loading, user } = useAuth0();
+    const { loading, user } = useAuth0();
 
-  if (loading || !user) {
-    return <div>Loading...</div>;
-  }
+    if (loading || !user) {
+        return <div>Loading...</div>;
+    }
 
-  return (
-    <Fragment>
-      <img src={user.picture} alt="Profile" />
+    return (
+        <Fragment>
+            <img src={user.picture} alt="Profile" />
 
-      <h2>{user.name}</h2>
-      <p>{user.email}</p>
-      <code>{JSON.stringify(user, null, 2)}</code>
-    </Fragment>
-  );
+            <h2>{user.name}</h2>
+            <p>{user.email}</p>
+            <code>{JSON.stringify(user, null, 2)}</code>
+        </Fragment>
+    );
 };
 
 export default Profile;
 ```
 
-### Replace src/App.js
+### Adding Routes (via react-router-dom)
+
+Replace src/App.js
 
 ```jsx
 // src/App.js
@@ -258,20 +282,20 @@ import Profile from "./components/Profile";
 import history from "./utils/history";
 
 function App() {
-  return (
-    <div className="App">
-      {/* Don't forget to include the history module */}
-      <Router history={history}>
-        <header>
-          <NavBar />
-        </header>
-        <Switch>
-          <Route path="/" exact />
-          <Route path="/profile" component={Profile} />
-        </Switch>
-      </Router>
-    </div>
-  );
+    return (
+        <div className="App">
+            {/* Don't forget to include the history module */}
+            <Router history={history}>
+                <header>
+                    <NavBar />
+                </header>
+                <Switch>
+                    <Route path="/" exact />
+                    <Route path="/profile" component={Profile} />
+                </Switch>
+            </Router>
+        </div>
+    );
 }
 
 export default App;
@@ -311,7 +335,7 @@ export default NavBar;
 
 ### Checkpoint (TypeError)
 
-Checkpoint: Tutorial says this should now be working, but you'll throw a "TypeError: Cannot read property 'loginWithRedirect' of undefined". That's because the Auth0 library isn't really loaded, so you can't yet use the "loginWithRedirect" method, because it's not ready.
+Checkpoint: Tutorial says this should now be working, but you'll throw a "TypeError: Cannot read property 'loginWithRedirect' of undefined". That's because the Auth0 library isn't really loaded when the page displays, you need to wait for it. So you can't yet use the "loginWithRedirect" method, because it's not ready. Add a short-circuit that shows "loading..." until Auth0 client is ready
 
 Update src/App.js
 
@@ -328,25 +352,25 @@ import Profile from "./components/Profile";
 import history from "./utils/history";
 
 function App() {
-  const { loading } = useAuth0();
+    const { loading } = useAuth0();
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-  return (
-    <div className="App">
-      {/* Don't forget to include the history module */}
-      <Router history={history}>
-        <header>
-          <NavBar />
-        </header>
-        <Switch>
-          <Route path="/" exact />
-          <Route path="/profile" component={Profile} />
-        </Switch>
-      </Router>
-    </div>
-  );
+    if (loading) {
+        return <div>Loading...</div>;
+    }
+    return (
+        <div className="App">
+            {/* Don't forget to include the history module */}
+            <Router history={history}>
+                <header>
+                    <NavBar />
+                </header>
+                <Switch>
+                    <Route path="/" exact />
+                    <Route path="/profile" component={Profile} />
+                </Switch>
+            </Router>
+        </div>
+    );
 }
 
 export default App;
@@ -376,23 +400,23 @@ import { Route } from "react-router-dom";
 import { useAuth0 } from "../react-auth0-spa";
 
 const PrivateRoute = ({ component: Component, path, ...rest }) => {
-  const { loading, isAuthenticated, loginWithRedirect } = useAuth0();
+    const { loading, isAuthenticated, loginWithRedirect } = useAuth0();
 
-  useEffect(() => {
-    if (loading || isAuthenticated) {
-      return;
-    }
-    const fn = async () => {
-      await loginWithRedirect({
-        appState: { targetUrl: path }
-      });
-    };
-    fn();
-  }, [loading, isAuthenticated, loginWithRedirect, path]);
+    useEffect(() => {
+        if (loading || isAuthenticated) {
+            return;
+        }
+        const fn = async () => {
+            await loginWithRedirect({
+                appState: { targetUrl: path }
+            });
+        };
+        fn();
+    }, [loading, isAuthenticated, loginWithRedirect, path]);
 
-  const render = props => (isAuthenticated === true ? <Component {...props} /> : null);
+    const render = props => (isAuthenticated === true ? <Component {...props} /> : null);
 
-  return <Route path={path} render={render} {...rest} />;
+    return <Route path={path} render={render} {...rest} />;
 };
 
 export default PrivateRoute;
@@ -416,26 +440,26 @@ import history from "./utils/history";
 import PrivateRoute from "./components/PrivateRoute";
 
 function App() {
-  const { loading } = useAuth0();
+    const { loading } = useAuth0();
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+    if (loading) {
+        return <div>Loading...</div>;
+    }
 
-  return (
-    <div className="App">
-      {/* Don't forget to include the history module */}
-      <Router history={history}>
-        <header>
-          <NavBar />
-        </header>
-        <Switch>
-          <Route path="/" exact />
-          <PrivateRoute path="/profile" component={Profile} />
-        </Switch>
-      </Router>
-    </div>
-  );
+    return (
+        <div className="App">
+            {/* Don't forget to include the history module */}
+            <Router history={history}>
+                <header>
+                    <NavBar />
+                </header>
+                <Switch>
+                    <Route path="/" exact />
+                    <PrivateRoute path="/profile" component={Profile} />
+                </Switch>
+            </Router>
+        </div>
+    );
 }
 
 export default App;
@@ -445,13 +469,13 @@ Now when you attempt http://localhost:3000/profile, you'll be redirected to the 
 
 ### Simplifying this implementation
 
-- react-auth0-spa.js: Removing setPopupOpen()
-- react-auth0-spa.js: Removing handleRedirectCallback()
-- react-auth0-spa.js: Added lots of comments
-- App.js: Changed <Router> to <HashRouter> so we can get rid of "history" concept
-- history.js: Removed it
-- index.js: Changed history.push() to window.history.replaceState()
-- PrivateRoute.js: Prepended "/#" to saved path since I'm using <HashRouter> now
+-   react-auth0-spa.js: Removing setPopupOpen()
+-   react-auth0-spa.js: Removing handleRedirectCallback()
+-   react-auth0-spa.js: Added lots of comments
+-   App.js: Changed <Router> to <HashRouter> so we can get rid of "history" concept
+-   history.js: Removed it
+-   index.js: Changed history.push() to window.history.replaceState()
+-   PrivateRoute.js: Prepended "/#" to saved path since I'm using <HashRouter> now
 
 react-auth0-spa.js
 
@@ -469,9 +493,9 @@ import createAuth0Client from "@auth0/auth0-spa-js";
 // We seem to be replacing URL with the SAME current URL
 // It also seems that we never actually call this function
 const DEFAULT_REDIRECT_CALLBACK = () => {
-  console.error("Changing Page URL:", window.location.pathname);
-  // replaceState() does not manipulate browser history, it simply replaces current URL in address bar
-  window.history.replaceState({}, document.title, window.location.pathname);
+    console.error("Changing Page URL:", window.location.pathname);
+    // replaceState() does not manipulate browser history, it simply replaces current URL in address bar
+    window.history.replaceState({}, document.title, window.location.pathname);
 };
 
 // ---------------------------------------------------------------------------------
@@ -491,64 +515,64 @@ export const useAuth0 = () => useContext(Auth0Context);
 // "children" is everything inside the actual Auth0Provider tag
 // "onRedirectCallback" is a named prop that the caller might have used, with DEFAULT_REDIRECT_CALLBACK being the default (if no value was given)
 export const Auth0Provider = ({ children, onRedirectCallback = DEFAULT_REDIRECT_CALLBACK, ...initOptions }) => {
-  // useState() is a React Hook, retrieves simple state where do you don't lifecycle methods or a full React class component
-  // Creates new state variable, arg1 to useState() is initial value, returns two values (value, and method to set value)
-  const [isAuthenticated, setIsAuthenticated] = useState();
-  const [user, setUser] = useState();
-  const [auth0Client, setAuth0] = useState();
-  const [loading, setLoading] = useState(true);
+    // useState() is a React Hook, retrieves simple state where do you don't lifecycle methods or a full React class component
+    // Creates new state variable, arg1 to useState() is initial value, returns two values (value, and method to set value)
+    const [isAuthenticated, setIsAuthenticated] = useState();
+    const [user, setUser] = useState();
+    const [auth0Client, setAuth0] = useState();
+    const [loading, setLoading] = useState(true);
 
-  //   -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-  // React Hook, useEffect() runs after first render, and after every re-render (DOM update)
-  // Essentially a "side effect" sort of like componentDidMount, componentDidUpdate, and componentWillUnmount combined
-  // 2nd arg (array) is empty, so this fn is called every time it's re-rendered
-  useEffect(() => {
-    const initAuth0 = async () => {
-      console.warn("Creating Auth0 Client");
-      const auth0FromHook = await createAuth0Client(initOptions);
-      setAuth0(auth0FromHook);
+    //   -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+    // React Hook, useEffect() runs after first render, and after every re-render (DOM update)
+    // Essentially a "side effect" sort of like componentDidMount, componentDidUpdate, and componentWillUnmount combined
+    // 2nd arg (array) is empty, so this fn is called every time it's re-rendered
+    useEffect(() => {
+        const initAuth0 = async () => {
+            console.warn("Creating Auth0 Client");
+            const auth0FromHook = await createAuth0Client(initOptions);
+            setAuth0(auth0FromHook);
 
-      // If we just returned from Auth0, then URL will contain "code=" query param
-      if (window.location.search.includes("code=")) {
-        console.error("=code");
-        // If we called loginWithRedirecct() with {appstate: <something>}, we'll get it back here
-        const { appState } = await auth0FromHook.handleRedirectCallback();
-        console.warn("appState", appState);
-        console.warn("About to call onRedirectCallback()");
-        onRedirectCallback(appState);
-      }
+            // If we just returned from Auth0, then URL will contain "code=" query param
+            if (window.location.search.includes("code=")) {
+                console.error("=code");
+                // If we called loginWithRedirecct() with {appstate: <something>}, we'll get it back here
+                const { appState } = await auth0FromHook.handleRedirectCallback();
+                console.warn("appState", appState);
+                console.warn("About to call onRedirectCallback()");
+                onRedirectCallback(appState);
+            }
 
-      const isAuthenticated = await auth0FromHook.isAuthenticated();
-      setIsAuthenticated(isAuthenticated);
+            const isAuthenticated = await auth0FromHook.isAuthenticated();
+            setIsAuthenticated(isAuthenticated);
 
-      if (isAuthenticated) {
-        const user = await auth0FromHook.getUser();
-        setUser(user);
-      }
+            if (isAuthenticated) {
+                const user = await auth0FromHook.getUser();
+                setUser(user);
+            }
 
-      setLoading(false);
-    };
-    initAuth0();
-    // eslint-disable-next-line
-  }, []);
+            setLoading(false);
+        };
+        initAuth0();
+        // eslint-disable-next-line
+    }, []);
 
-  //   -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-  // This is the return for the Auth0Provider component definition (Auth0Provider component is used in index.js)
-  return (
-    <Auth0Context.Provider
-      value={{
-        isAuthenticated,
-        user,
-        loading,
-        getIdTokenClaims: (...p) => auth0Client.getIdTokenClaims(...p),
-        loginWithRedirect: (...p) => auth0Client.loginWithRedirect(...p),
-        getTokenSilently: (...p) => auth0Client.getTokenSilently(...p),
-        getTokenWithPopup: (...p) => auth0Client.getTokenWithPopup(...p),
-        logout: (...p) => auth0Client.logout(...p)
-      }}>
-      {children}
-    </Auth0Context.Provider>
-  );
+    //   -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+    // This is the return for the Auth0Provider component definition (Auth0Provider component is used in index.js)
+    return (
+        <Auth0Context.Provider
+            value={{
+                isAuthenticated,
+                user,
+                loading,
+                getIdTokenClaims: (...p) => auth0Client.getIdTokenClaims(...p),
+                loginWithRedirect: (...p) => auth0Client.loginWithRedirect(...p),
+                getTokenSilently: (...p) => auth0Client.getTokenSilently(...p),
+                getTokenWithPopup: (...p) => auth0Client.getTokenWithPopup(...p),
+                logout: (...p) => auth0Client.logout(...p)
+            }}>
+            {children}
+        </Auth0Context.Provider>
+    );
 };
 // End of "Auth0Provider" component
 // ---------------------------------------------------------------------------------
